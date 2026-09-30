@@ -35,6 +35,7 @@ curl http://localhost:11434/api/tags
 | 모듈 | 책 | 내용 |
 |---|---|---|
 | [`chapter01`](chapter01) | 1장 AI 에이전트, 새로운 패러다임의 시작 | 첫 ChatClient 호출, 응답 메타데이터(토큰·종료 이유), LLM이 대화를 기억하지 않음을 확인 |
+| [`chapter02`](chapter02) | 2장 스프링 AI 프레임워크 | ChatModel·ChatClient, 프롬프트 템플릿과 9가지 기법, 토큰, 구조화 출력, 대화 메모리, 어드바이저, 단계별 CLI 챗봇 |
 
 각 모듈의 `README.md`에 그 장에서 무엇을 배우는지, 어떤 순서로 코드를 읽으면 되는지 적어 두었다.
 
