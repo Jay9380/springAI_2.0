@@ -35,7 +35,10 @@ public class TodoTools {
             return "등록된 할 일이 없습니다.";
         }
         StringBuilder sb = new StringBuilder();
-        todos.forEach(t -> sb.append("#").append(t.id()).append(t.done() ? " [완료] " : " [ ] ").append(t.title()).append('\n'));
+        // 상태는 기호([ ], [x])가 아니라 글자로 쓴다. 실측: "#1 [ ] 제목"을 모델이 '완료됨'으로 잘못 읽었다.
+        // 도구 결과도 모델이 읽는 프롬프트다 — 오해의 여지가 없는 형식으로 돌려준다.
+        todos.forEach(t -> sb.append("#").append(t.id()).append(" (").append(t.done() ? "완료" : "미완료").append(") ")
+                .append(t.title()).append('\n'));
         return sb.toString().trim();
     }
 
