@@ -1,0 +1,31 @@
+# 2장 실습 설정 (책 예제 2.72 방식)
+#
+# 실행할 단계를 spring.ai.cli.step 으로 고른다. 각 단계 클래스는 @ConditionalOnProperty로
+# 이 값이 자기 이름과 같을 때만 빈으로 등록된다 → 한 앱 안에 러너가 여러 개 있어도 하나만 돈다.
+#
+#   ./mvnw -pl chapter02 spring-boot:run                                              # 기본 단계로 실행
+#   ./mvnw -pl chapter02 spring-boot:run -Dspring-boot.run.arguments=--spring.ai.cli.step=ch2-step1
+#
+# 단계 목록은 chapter02/README.md 참고.
+spring:
+  application:
+    name: chapter02
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    cli:
+      step: ch2-step1   # 최종 통합 챗봇(ch2-final)이 추가되면 기본값을 바꾼다
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3.5:4b
+        think: false          # 추론(thinking) 출력 끄기 — 답만 받는다
+        temperature: 0.7      # 전역 기본값. 요청마다 .options(...)로 덮어쓸 수 있다 (책 2.4.7)
+
+logging:
+  level:
+    root: warn
+    kr.jay.springai: info
+    # SimpleLoggerAdvisor가 요청/응답 전체를 DEBUG로 남긴다 (Step5 / final에서 확인)
+    org.springframework.ai.chat.client.advisor: debug

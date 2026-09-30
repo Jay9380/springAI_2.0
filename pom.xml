@@ -34,6 +34,7 @@
     <!-- 장이 추가될 때마다 여기에 모듈을 하나씩 등록한다 -->
     <modules>
         <module>chapter01</module>
+        <module>chapter02</module>
     </modules>
 
     <!--

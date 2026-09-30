@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 버전은 모두 부모 pom이 관리한다 -->
+    <parent>
+        <groupId>kr.jay.springai</groupId>
+        <artifactId>spring-ai-2-study</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>chapter02</artifactId>
+    <name>chapter02</name>
+    <description>2장 - 스프링 AI 프레임워크 : ChatClient, 프롬프트, 구조화 출력, 메모리, 어드바이저, 챗봇 CLI</description>
+
+    <dependencies>
+        <!--
+          Ollama 스타터 하나만 추가하면 자동설정이 다음 빈을 만들어 준다.
+            - OllamaChatModel  : ChatModel 인터페이스의 Ollama 구현체 (HTTP JSON 변환 담당)
+            - ChatClient.Builder : ChatClient를 만드는 빌더 (프로토타입 빈)
+          버전은 부모 pom의 spring-ai-bom이 정한다.
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
