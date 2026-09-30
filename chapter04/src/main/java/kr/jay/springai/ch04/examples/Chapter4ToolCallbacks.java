@@ -104,6 +104,16 @@ public final class Chapter4ToolCallbacks {
                 .description("현재 CLI 세션의 사용자·대화 ID·학습 주제를 요약합니다.")
                 .inputType(SessionRequest.class)
                 .toolMetadata(ToolMetadata.builder().returnDirect(returnDirect).build())
+                // 함정(4.2.5, 실측): 기본 변환기는 String 결과도 JSON으로 직렬화한다 → "\"세션 요약\\n- …\""처럼
+                // 따옴표와 \n이 붙는다. 모델에게 보낼 때는 괜찮지만 returnDirect로 사용자에게 바로 보내면 그대로 보인다.
+                // 그래서 문자열은 그대로 통과시키는 변환기를 쓴다.
+                .toolCallResultConverter(Chapter4ToolCallbacks::plainText)
                 .build();
+    }
+
+    /** String 결과는 JSON 직렬화 없이 그대로, 그 외는 기본 변환 (ToolCallResultConverter 람다 구현) */
+    static String plainText(Object result, java.lang.reflect.Type returnType) {
+        return result instanceof String s ? s
+                : new org.springframework.ai.tool.execution.DefaultToolCallResultConverter().convert(result, returnType);
     }
 }
