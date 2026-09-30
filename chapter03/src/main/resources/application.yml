@@ -8,7 +8,7 @@ spring:
     banner-mode: off
   ai:
     cli:
-      step: ch3-step1
+      step: ch3-final   # 기본: 근거 표시형 RAG CLI
     ollama:
       base-url: http://localhost:11434
       chat:

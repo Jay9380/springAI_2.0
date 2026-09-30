@@ -13,12 +13,14 @@
 | 빌드 | Maven Wrapper (`./mvnw`) | Maven 설치 불필요 |
 | 모델 런타임 | [Ollama](https://ollama.com/download) | 로컬 GPU/CPU로 오픈 모델 실행 |
 | 채팅 모델 | `qwen3.5:4b` | 책의 기본 모델. 약 3.4GB |
+| 임베딩 모델 | `bge-m3` | 3장부터. 한국어에 강한 다국어 모델, 1024차원. 약 1.2GB |
 
 ## 시작하기
 
 ```bash
 # 1) Ollama 설치 후 모델 받기 (한 번만)
 ollama pull qwen3.5:4b
+ollama pull bge-m3        # 3장부터
 
 # 2) Ollama가 떠 있는지 확인 — 11434 포트
 curl http://localhost:11434/api/tags
@@ -36,6 +38,7 @@ curl http://localhost:11434/api/tags
 |---|---|---|
 | [`chapter01`](chapter01) | 1장 AI 에이전트, 새로운 패러다임의 시작 | 첫 ChatClient 호출, 응답 메타데이터(토큰·종료 이유), LLM이 대화를 기억하지 않음을 확인 |
 | [`chapter02`](chapter02) | 2장 스프링 AI 프레임워크 | ChatModel·ChatClient, 프롬프트 템플릿과 9가지 기법, 토큰, 구조화 출력, 대화 메모리, 어드바이저, 단계별 CLI 챗봇 |
+| [`chapter03`](chapter03) | 3장 스프링 AI와 RAG | ETL(리더 4종·마스킹·청킹·적재), bge-m3 임베딩, SimpleVectorStore 검색·필터, Naive/Advanced RAG, 근거 표시형 RAG CLI |
 
 각 모듈의 `README.md`에 그 장에서 무엇을 배우는지, 어떤 순서로 코드를 읽으면 되는지 적어 두었다.
 
