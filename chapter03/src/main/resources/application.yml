@@ -1,0 +1,25 @@
+# 3장 실습 설정 (책 3.8.1)
+#   ./mvnw -pl chapter03 spring-boot:run -Dspring-boot.run.arguments=--spring.ai.cli.step=ch3-step1
+spring:
+  application:
+    name: chapter03
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    cli:
+      step: ch3-step1
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3.5:4b
+        think: false
+        temperature: 0.3
+      embedding:
+        # 한국어에 강한 다국어 임베딩 모델. 1024차원, 최대 8192 토큰 (ollama pull bge-m3)
+        model: bge-m3
+
+logging:
+  level:
+    root: warn
+    kr.jay.springai: info

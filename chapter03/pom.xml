@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>kr.jay.springai</groupId>
+        <artifactId>spring-ai-2-study</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>chapter03</artifactId>
+    <name>chapter03</name>
+    <description>3장 - 스프링 AI와 RAG : ETL(읽기·변환·적재), 임베딩, 벡터 저장소, 모듈러 RAG, RAG 챗봇 CLI</description>
+
+    <dependencies>
+        <!-- 채팅(qwen3.5:4b)과 임베딩(bge-m3) 모델 둘 다 Ollama 스타터 하나로 자동 구성된다 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
+        <!-- VectorStore 인터페이스 + SimpleVectorStore(메모리 기반 참조 구현, 3.6.8) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-vector-store</artifactId>
+        </dependency>
+        <!-- Naive RAG: QuestionAnswerAdvisor (3.7.2) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-vector-store-advisor</artifactId>
+        </dependency>
+        <!-- Advanced/Modular RAG: RetrievalAugmentationAdvisor와 전·후처리 모듈 (3.7.3~) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-rag</artifactId>
+        </dependency>
+
+        <!-- DocumentReader: TextReader·JsonReader는 코어(spring-ai-commons)에 들어 있고,
+             마크다운과 HTML은 전용 모듈이 필요하다 (3.2.4, 3.2.5) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-markdown-document-reader</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-jsoup-document-reader</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
