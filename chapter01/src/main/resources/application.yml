@@ -1,0 +1,23 @@
+# 1장 실습 설정
+spring:
+  application:
+    name: chapter01
+  main:
+    # 웹 서버를 띄우지 않는 콘솔 앱. 실행 → 질문 → 답 출력 → 종료 (책 2.2.3과 같은 방식)
+    web-application-type: none
+  ai:
+    ollama:
+      # 로컬 Ollama 서버 주소 (기본값도 이 값이다)
+      base-url: http://localhost:11434
+      chat:
+        # 스프링 AI 2.0은 옵션 키가 '평평'해졌다: spring.ai.ollama.chat.<옵션>  (1.x는 ...chat.options.<옵션>)
+        model: qwen3.5:4b
+        # qwen3.5는 '생각(thinking)' 단계를 먼저 출력하는 모델이다. 학습 단계에서는 꺼서 답만 받는다.
+        think: false
+        # 낮을수록 확률 높은 토큰만 고른다 → 답이 덜 흔들린다 (노트 2.2 temperature 참고)
+        temperature: 0.3
+
+logging:
+  level:
+    root: warn
+    kr.jay.springai: info
