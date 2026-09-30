@@ -58,7 +58,8 @@ public class Ch3Step2_DocumentTransformers implements CommandLineRunner {
         Document sample = chunks.get(0);
         System.out.println("\n── 한 조각의 세 가지 얼굴 (3.3.2 ContentFormatter)");
         System.out.println("[getText()] 본문만:\n" + indent(sample.getText()));
-        System.out.println("[EMBED] 임베딩 모델이 보는 글 (ingestedAt·charset·isActive 제외):\n"
+        // EMBED 포맷은 'OpenAI 임베딩 모델이라면' 보게 될 글이다. Ollama 임베딩은 getText()만 쓴다 (EtlPipeline 주석 참고)
+        System.out.println("[EMBED] 임베딩용 포맷 — OpenAI 임베딩만 사용, Ollama는 본문만 임베딩 (ingestedAt·charset·isActive 제외):\n"
                 + indent(sample.getFormattedContent(MetadataMode.EMBED)));
         System.out.println("[INFERENCE] LLM이 보는 글 (ingestedAt·charset·parent_document_id 제외):\n"
                 + indent(sample.getFormattedContent(MetadataMode.INFERENCE)));

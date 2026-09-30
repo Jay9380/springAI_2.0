@@ -54,6 +54,11 @@ public class EtlPipeline {
      *   <li>excludedEmbedMetadataKeys : 임베딩할 때 뺄 키 (날짜·내부 값이 벡터를 흐리지 않게)</li>
      *   <li>excludedInferenceMetadataKeys : LLM에게 보낼 때 뺄 키 (토큰 절약·내부 정보 보호)</li>
      * </ul>
+     *
+     * <p><b>주의 (2.0.1 소스 확인):</b> 임베딩에 무엇이 들어가는지는 EmbeddingModel.getEmbeddingContent()가 정한다.
+     * 기본 구현은 getText()(본문만)이고, 이를 재정의해 EMBED 모드의 포맷을 쓰는 구현체는 OpenAiEmbeddingModel뿐이다.
+     * 즉 이 실습(Ollama + bge-m3)에서는 EMBED 설정이 벡터에 반영되지 않고 <b>본문만</b> 임베딩된다.
+     * INFERENCE 쪽(LLM에게 보여 주는 글)은 RAG 프롬프트를 만들 때 실제로 쓰인다.
      */
     public DefaultContentFormatter formatter() {
         return DefaultContentFormatter.builder()
