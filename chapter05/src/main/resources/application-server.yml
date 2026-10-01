@@ -30,3 +30,8 @@ spring:
 
 server:
   port: 8085
+
+# [5.4] /mcp 로 오는 요청은 X-API-Key 헤더가 이 값과 같아야 한다 (McpApiKeyFilter)
+chapter5:
+  mcp:
+    api-key: ${MCP_API_KEY:local-study-key}

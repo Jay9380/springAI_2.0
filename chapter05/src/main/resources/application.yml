@@ -34,6 +34,12 @@ spring:
               url: http://localhost:8085
               endpoint: /mcp
 
+# [5.4] MCP 서버 API 키. 서버(application-server.yml)와 같은 값을 쓴다.
+# 실제 키는 코드·저장소에 두지 말고 환경 변수 MCP_API_KEY로 주입한다. 기본값은 로컬 학습용.
+chapter5:
+  mcp:
+    api-key: ${MCP_API_KEY:local-study-key}
+
 logging:
   level:
     root: warn

@@ -39,12 +39,31 @@ java -jar chapter05/target/chapter05-0.0.1-SNAPSHOT.jar --spring.ai.cli.step=ch5
 | `ch5-client-step4` | `Ch5Step4_McpClientPolicy` | 필터 전·후 도구, 기본/허용 목록 `_meta` 비교 | 없음 |
 | `ch5-final` (기본) | `Ch5McpCliChatbotApplication` | MCP 도구 챗봇 + 슬래시 명령(`/tools` `/resource` `/prompt` `/complete` `/answer-direct`) | 둘 다 |
 
+## 5.4 보안 — API 키 (최소 구현)
+
+원격(HTTP)으로 공개한 MCP 서버는 "아무나 도구를 실행시킬 수 있는 엔드포인트"다. 책은 커뮤니티 라이브러리
+`mcp-security`(`mcp-server-security` / `mcp-client-security`)로 **API 키**와 **OAuth2(JWT)** 두 방식을 보여 준다.
+여기서는 라이브러리 없이 같은 개념을 가장 작게 구현했다.
+
+| 쪽 | 클래스 | 하는 일 |
+|---|---|---|
+| 서버 | `server/McpApiKeyFilter` | `/mcp` 요청의 `X-API-Key` 헤더를 상수 시간 비교, 다르면 401 (initialize부터 막힘) |
+| 클라이언트 | `client/McpClientAuthConfig` | `McpSyncHttpClientRequestCustomizer` 빈 → 자동 구성이 **모든** MCP 요청에 헤더를 붙임 |
+
+키는 양쪽 모두 `chapter5.mcp.api-key: ${MCP_API_KEY:local-study-key}`. 운영이라면 환경 변수·비밀 저장소로 주입하고,
+사용자별 권한·만료가 필요하면 OAuth2로 간다(401의 `WWW-Authenticate`로 인가 서버를 발견하는 흐름이 MCP 명세에 있다).
+
+```bash
+curl -i -X POST localhost:8085/mcp -H 'Content-Type: application/json' -d '{}'   # → 401
+MCP_API_KEY=wrong java -jar chapter05/target/chapter05-*.jar --spring.ai.cli.step=ch5-client-step4   # → initialize 실패
+```
+
 ## 테스트
 
 | 테스트 | 확인하는 것 |
 |---|---|
 | `RagServerLogicTest` | 청킹 전 마스킹, 적재 멱등성, category 필터·topK 상한, **기본 `_meta` 변환기는 password까지 보냄**, 도구 필터 |
-| `McpServerIntegrationTest` | 서버를 임의 포트로 실제 기동 + 순수 MCP 자바 클라이언트로 접속: 도구 3개와 힌트, `McpMeta`가 스키마에 없음, tools/call, **없는 도구 거절**, 리소스·자동 완성 |
+| `McpServerIntegrationTest` | 서버를 임의 포트로 실제 기동 + 순수 MCP 자바 클라이언트로 접속: 도구 3개와 힌트, `McpMeta`가 스키마에 없음, tools/call, **없는 도구 거절**, 리소스·자동 완성, **키 없음·틀린 키는 initialize 실패** |
 
 ## 실제로 돌려 보고 알게 된 것
 

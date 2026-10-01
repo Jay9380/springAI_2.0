@@ -54,9 +54,21 @@ class McpServerIntegrationTest {
 
     @BeforeEach
     void connect() {
-        client = McpClient.sync(HttpClientStreamableHttpTransport.builder("http://localhost:" + port).endpoint("/mcp").build())
-                .build();
+        client = clientWithKey("local-study-key");   // [5.4] 서버 설정과 같은 키
         client.initialize();                     // initialize → notifications/initialized 핸드셰이크
+    }
+
+    /** 모든 요청에 X-API-Key 헤더를 붙이는 클라이언트. key가 null이면 헤더를 붙이지 않는다. */
+    McpSyncClient clientWithKey(String key) {
+        var transport = HttpClientStreamableHttpTransport.builder("http://localhost:" + port)
+                .endpoint("/mcp")
+                .httpRequestCustomizer((builder, method, endpoint, body, ctx) -> {
+                    if (key != null) {
+                        builder.header("X-API-Key", key);
+                    }
+                })
+                .build();
+        return McpClient.sync(transport).requestTimeout(java.time.Duration.ofSeconds(5)).build();
     }
 
     @AfterEach
@@ -86,6 +98,27 @@ class McpServerIntegrationTest {
         String text = ((McpSchema.TextContent) result.content().getFirst()).text();
         assertThat(result.isError()).isFalse();
         assertThat(text).contains("policy-docs.txt").doesNotContain("@example.com");
+    }
+
+    @Test
+    void withoutApiKey_handshakeIsRejected() {
+        // [5.4] 실패 경로: 키가 없으면 initialize 단계에서 401로 막힌다 → 도구 목록조차 볼 수 없다
+        McpSyncClient anonymous = clientWithKey(null);
+        try {
+            org.assertj.core.api.Assertions.assertThatThrownBy(anonymous::initialize);
+        } finally {
+            anonymous.close();
+        }
+    }
+
+    @Test
+    void wrongApiKey_isRejected() {
+        McpSyncClient intruder = clientWithKey("guess-1234");
+        try {
+            org.assertj.core.api.Assertions.assertThatThrownBy(intruder::initialize);
+        } finally {
+            intruder.close();
+        }
     }
 
     @Test
