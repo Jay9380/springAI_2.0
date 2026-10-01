@@ -40,6 +40,7 @@ curl http://localhost:11434/api/tags
 | [`chapter02`](chapter02) | 2장 스프링 AI 프레임워크 | ChatModel·ChatClient, 프롬프트 템플릿과 9가지 기법, 토큰, 구조화 출력, 대화 메모리, 어드바이저, 단계별 CLI 챗봇 |
 | [`chapter03`](chapter03) | 3장 스프링 AI와 RAG | ETL(리더 4종·마스킹·청킹·적재), bge-m3 임베딩, SimpleVectorStore 검색·필터, Naive/Advanced RAG, 근거 표시형 RAG CLI |
 | [`chapter04`](chapter04) | 4장 툴 호출 | @Tool·FunctionToolCallback, 결과 변환·ToolContext·returnDirect, 실행 제어 3방식(사람 승인·반복 상한), 재고·할 일 도구 CLI |
+| [`chapter05`](chapter05) | 5장 스프링 AI MCP | RAG를 MCP 서버(@McpTool·리소스·프롬프트·자동 완성)로 공개, MCP 클라이언트 발견·직접 호출·ToolCallback 변환·_meta 정책, MCP 챗봇 CLI |
 
 각 모듈의 `README.md`에 그 장에서 무엇을 배우는지, 어떤 순서로 코드를 읽으면 되는지 적어 두었다.
 

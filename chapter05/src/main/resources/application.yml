@@ -9,7 +9,7 @@ spring:
     banner-mode: off
   ai:
     cli:
-      step: ch5-client-step1
+      step: ch5-final   # 기본: MCP 도구 챗봇 (서버가 먼저 떠 있어야 함)
     model:
       embedding: none                   # 문서 인덱싱·벡터 검색은 '서버의 책임' → 클라이언트는 임베딩 모델이 필요 없다
     ollama:
