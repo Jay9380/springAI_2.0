@@ -26,6 +26,37 @@
             <artifactId>spring-ai-starter-model-ollama</artifactId>
         </dependency>
 
+        <!--
+          [6.4] 에이전트의 외부 확장(MCP)과 사람 승인(Elicitation).
+          한 모듈에 클라이언트·서버를 같이 두고 프로파일로 나눈다 (5장과 같은 방식).
+            spring.profiles.active=ops-server : 운영 MCP 서버 (위험한 툴은 실행 전에 사람 승인을 요청)
+            spring.profiles.active=agent      : 그 서버를 쓰는 에이전트 CLI
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+        </dependency>
+
+        <!--
+          [6.4.5] 동적 툴 탐색. 책은 스타터(spring-ai-starter-tool-search-advisor)를 쓰지만, 그 스타터의 자동 구성은
+          spring.ai.chat.client.tool-search-advisor.enabled=true 하나로 '모든' ChatClient의 툴 루프를 바꿔 버린다.
+          이 모듈은 다른 단계도 같이 있으므로 라이브러리만 넣고 어드바이저를 필요한 곳에서 직접 만든다.
+          LuceneToolIndex는 lucene-core가 선택(optional) 의존성이라 직접 추가한다 (버전은 tool-search-tool 2.0.1 pom과 같게).
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-tool-search-advisor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>9.12.3</version>
+        </dependency>
+
         <!-- [6.3.3 예제 6.13] 툴 루프 메트릭(카운터·분포). 버전은 스프링 부트가 관리한다 -->
         <dependency>
             <groupId>io.micrometer</groupId>

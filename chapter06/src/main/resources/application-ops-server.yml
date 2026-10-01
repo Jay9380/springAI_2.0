@@ -1,0 +1,23 @@
+# [6.4.4] 운영 MCP 서버 (--spring.profiles.active=ops-server)
+spring:
+  application:
+    name: chapter06-ops-server
+  main:
+    web-application-type: servlet
+  ai:
+    cli:
+      step: none                        # 서버 모드에서는 CLI 단계를 돌리지 않는다
+    mcp:
+      server:
+        enabled: true
+        annotation-scanner:
+          enabled: true                 # 공통 설정에서 끈 값을 다시 켠다 (빠뜨리면 @McpTool이 등록되지 않는다 — 5장 교훈)
+        name: chapter6-ops-server
+        version: 1.0.0
+        type: SYNC
+        protocol: STREAMABLE            # Elicitation은 서버→클라이언트 요청이 필요하므로 상태 있는(stateful) 전송이어야 한다
+        streamable-http:
+          mcp-endpoint: /mcp
+
+server:
+  port: 8086

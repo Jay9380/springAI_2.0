@@ -1,0 +1,16 @@
+# [6.4] 에이전트 CLI: 운영 MCP 서버(ops-server)에 연결한다. 서버를 먼저 띄울 것.
+spring:
+  ai:
+    mcp:
+      client:
+        enabled: true
+        name: chapter6-agent
+        type: SYNC
+        initialized: true
+        # 사람의 승인을 기다리는 동안에도 tools/call 요청은 열려 있다. 사람이 생각할 시간만큼 넉넉히.
+        request-timeout: 5m
+        streamable-http:
+          connections:
+            operations:                 # 연결 이름 = @McpElicitation(clients = "operations")의 그 이름
+              url: http://localhost:8086
+              endpoint: /mcp

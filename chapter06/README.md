@@ -18,6 +18,15 @@ java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.ai.cli.step=<st
 | `ch6-advisor-loop` | `Ch6Step4_RecursiveAdvisors` | 6.3.2~6.3.4 | 루프 안/밖 어드바이저 호출 수, 안전 가드, 메트릭 |
 | `ch6-augment` | `Ch6Step5_AugmentedToolArguments` | 6.3.4 | 파라미터 증강 — 툴 호출의 '왜'를 로그로 |
 | `ch6-validate` | `Ch6Step6_StructuredOutputValidation` | 6.3.5 | 구조화 출력 교정 루프 (대화형 아님) |
+| `ch6-agent` | `Ch6Step7_BasicAgent` | 6.4.3~6.4.4 | 코어만으로 만든 에이전트 + MCP 툴 + 사람 승인 (`--spring.profiles.active=agent`, 서버 먼저) |
+| `ch6-tool-search` | `Ch6Step8_ToolSearch` | 6.4.5 | 툴 28개 전부 노출 vs 툴 검색(Lucene/Regex) 토큰 비교 (대화형 아님) |
+
+6.4.4 사람 승인은 터미널 2개로 돌린다.
+
+```bash
+java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.profiles.active=ops-server        # 운영 MCP 서버 :8086
+java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.profiles.active=agent --spring.ai.cli.step=ch6-agent
+```
 
 ## 6.1 워크플로와 자율 에이전트
 
@@ -99,6 +108,42 @@ ToolCallingAdvisor는 반복마다 컨텍스트 맵을 얕게 복사하므로 `d
   `useProviderStructuredOutput().validateSchema()`(Ollama가 생성 단계에서 형식 강제 + 검증은 안전망)로 바꾸자 한 번에 통과했다.
 - **스키마 검증은 '모양'만 보장한다.** days=3인데 활동이 5개, 없는 장소 이름, 중국어 글자(享用)가 섞였다. 내용 검증은 7장(평가)의 몫.
 
+## 6.4 스프링 AI 에이전트 — 루프 + 툴 + 사람
+
+| 클래스 | 책 | 내용 |
+|---|---|---|
+| `agent/BasicSpringAIAgent` | 예제 6.17 | ChatClient + ToolCallingAdvisor(+300, 내부 기록 끔) + 메모리(+400, 루프 안) + 로컬 툴 + MCP 툴. while 없음 |
+| `hitl/OpsMcpTools` | 6.4.4 | 운영 MCP 서버: `get_service_status`(읽기 전용) / `restart_service`(실행 직전 `ctx.elicit`로 승인 요청) |
+| `hitl/ConsoleElicitationHandler` | 예제 6.18 | `@McpElicitation(clients = "operations")` — y면 ACCEPT+폼(confirm, reason), 그 외 DECLINE, 입력 끊김은 CANCEL |
+| `toolsearch/DecoyTools` + `Ch6Step8_ToolSearch` | 예제 6.20, 표 6.13 | 관련 3 + 무관 25개 툴에서 `ToolSearchToolCallingAdvisor`의 효과 측정 |
+
+**승인은 '실제 작업 바로 앞'에서 일어난다.** 모델이 무엇을 생각하든 `ctx.elicit`를 지나야 실행된다. 거절·취소·폼 미체크·
+승인 창구 없는 클라이언트는 모두 '실행 안 됨'으로 끝나는지 `OpsServerElicitationTest`가 프로토콜 수준에서 확인한다.
+
+### 실제로 돌려 보고 알게 된 것
+
+- **사람 승인 흐름이 끝까지 돌았다.** "payment-api 상태 보고 재시작해줘" → `[승인 요청] 'payment-api' 서비스를 재시작하려 합니다… (y/n)` → y + 사유
+  → "정상적으로 재시작되었습니다. 사유는 배포 후 메모리 누수". "billing-api도" → n → "운영자의 승인이 없어 거절되었습니다".
+- **표준 입력 리더는 하나만.** 승인 핸들러와 대화 루프가 각자 Scanner를 만들면 먼저 만든 쪽이 입력을 버퍼에 가져가 다른 쪽이 못 읽는다.
+  `ChatConsole.readLine()` 하나를 공유하도록 바꿨다.
+- **승인 창구 없는 클라이언트는 라이브러리도 막는다.** `elicitEnabled()` 검사를 지우고 돌리니 `ctx.elicit`가 "Elicitation not supported by the client" 예외로 막았다.
+  그래서 이 검사는 안전장치라기보다 '모델이 이해할 수 있는 안내문'이다(주석에 정정해 둠).
+- **툴 검색 실측 (qwen3.5:4b, 질문 "SKU-100 재고", 툴 28개):**
+
+  | 방식 | LLM 호출 | 입력 토큰 | 결과 |
+  |---|---|---|---|
+  | 전부 노출 | 2회 | 3,927 | 정답 |
+  | 툴 검색 · Regex | 3회 | 2,334~2,376 (−40%) | 정답 |
+  | 툴 검색 · Lucene (모델이 한국어로 검색) | 3회 | 2,036 (−48%) | 정답 |
+  | 툴 검색 · Lucene (모델이 영어로 검색) | 2회 | 1,027 | **툴을 못 찾아 오답** |
+
+  책의 측정(34~64% 절감, 호출 1~2회 증가)과 같은 경향이다.
+- **Lucene 색인은 키워드 매칭이다.** 모델이 "inventory check SKU 100 stock quantity"로 검색하면 한국어 설명("상품 SKU의 현재 재고 수량을…")을 못 찾는다.
+  게다가 'SKU의'처럼 조사가 붙은 토큰은 'SKU'와 다르다. 툴 설명 언어와 검색어 언어를 맞추거나(영어 설명 또는 한국어 검색 유도), 의미 검색(`VectorToolIndex`)을 쓴다.
+- **Lucene 임계값은 절대 BM25 점수다.** 처음 쓴 단위 테스트는 툴 1개만 색인해서 한국어 검색도 실패했다(문서가 적으면 IDF가 낮아 점수가 0.4 아래).
+  같은 임계값이 툴 개수에 따라 다르게 동작하므로 운영 툴 수로 조정해야 한다. 두 경우를 테스트로 고정했다.
+- 스타터(`spring-ai-starter-tool-search-advisor`)의 자동 구성은 `enabled=true` 하나로 **모든** ChatClient의 툴 루프를 바꾼다. 이 모듈은 라이브러리만 넣고 직접 만들었다.
+
 ## 테스트
 
 | 테스트 | 확인하는 것 |
@@ -106,4 +151,7 @@ ToolCallingAdvisor는 반복마다 컨텍스트 맵을 얕게 복사하므로 `d
 | `WorkflowPatternsTest` | 체이닝 출력 전달·**게이트 실패 시 중단**, 라우팅 매칭·**모르는 키 → 기본 경로**, 병렬 순서 보존·다수결, 오케스트레이터 **하위 작업 상한**, 평가 조기 종료·**상한에서 중단**·**코드 검사가 LLM의 PASS를 뒤집음** |
 | `ContextEngineeringTest` | VIEWER가 **실제로 받은 스키마**에 cancelOrder 없음, **모델이 이름을 지어내 호출해도 거절·상태 불변**, 실패 메시지가 다음 컨텍스트에, 지침·역할 안내 주입, **secrets 경로 8가지 철자 모두 거부** |
 | `RecursiveAdvisorTest` | 루프 밖 1회·안 3회, 메모리 밖(+200)은 질문·답만 / 안(+400)은 툴 기록까지(자동 등록 어드바이저가 내부 기록을 끔), **반복 상한·토큰 예산 차단**, **상태가 요청마다 새로**, **앞 반복 결과까지 자르기**, 메트릭, 증강 인자가 소비자에게만 가고 원래 툴은 원래 인자로, 검증 실패 → 오류 피드백 재시도, **재시도 소진 시 호출자에게 예외** |
+| `OpsServerElicitationTest` | 운영 MCP 서버를 실제로 띄우고 순수 MCP 클라이언트로: 조회는 묻지 않음, 승인 시 실행·폼 스키마 전달, **거절·취소·confirm 미체크·승인 창구 없음은 실행 안 됨** |
+| `ConsoleElicitationHandlerTest` | y → ACCEPT+폼, **그 외 입력은 DECLINE**, **입력 없음은 CANCEL(승인으로 취급 안 함)** |
+| `AgentAndToolSearchTest` | 기본 에이전트 메모리에 툴 결과가 한 번씩만, 툴 검색 첫 호출은 toolSearchTool 하나만·찾은 툴만 추가, **대화 ID 없으면 실패**, **Lucene 언어 불일치·소수 툴 임계값 함정** |
 | `ManualAgentLoopTest` | 툴 2개 연쇄 후 답변(세 번째 호출에 툴 결과 2개 누적), **멈추지 않는 모델은 상한에서 차단** |

@@ -1,5 +1,6 @@
-# 6장 실습 설정
+# 6장 실습 설정 (공통 = 에이전트 CLI 기본값)
 #   java -jar chapter06/target/chapter06-*.jar --spring.ai.cli.step=ch6-workflows
+#   6.4는 프로파일을 함께 준다: ops-server(MCP 서버) / agent(그 서버를 쓰는 에이전트)
 spring:
   application:
     name: chapter06
@@ -15,6 +16,13 @@ spring:
         model: qwen3.5:4b
         think: false
         temperature: 0.1
+    mcp:
+      client:
+        enabled: false                  # 6.4의 agent 프로파일에서만 켠다 (다른 단계는 서버 없이 돈다)
+      server:
+        enabled: false                  # ops-server 프로파일에서만 켠다
+        annotation-scanner:
+          enabled: false
 
 logging:
   level:
