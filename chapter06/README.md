@@ -14,6 +14,7 @@ java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.ai.cli.step=<st
 |---|---|---|---|
 | `ch6-workflows` | `Ch6Step1_Workflows` | 6.1.2 | 워크플로 5종 차례로 실행 (`--ch6.pattern=chain\|routing\|parallel\|orchestrator\|evaluator`) |
 | `ch6-loop` | `Ch6Step2_ManualAgentLoop` | 6.1.3~6.1.4 | 수동 에이전트 루프 — 계획·행동·관찰을 단계별로 출력 |
+| `ch6-context` | `Ch6Step3_ContextEngineering` | 6.2 | 전달 영역 vs 집행 영역 (`--ch6.role=viewer\|operator`) |
 
 ## 6.1 워크플로와 자율 에이전트
 
@@ -38,9 +39,29 @@ java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.ai.cli.step=<st
 - **모델이 툴 두 개를 한 번에 요청했다.** 고객 조회와 주문 조회가 둘 다 ID만 필요하니 한 응답에 툴 호출 2개(병렬 툴 호출) → 루프 1회로 끝났다.
 - 병렬화: 이해관계자 4건 동시 실행 약 5초. 투표(3회 다수결)는 SQL 인젝션을 '취약'으로 판정.
 
+## 6.2 컨텍스트 엔지니어링 — 전달 vs 집행
+
+| 요소 | LLM에 전달 (참고) | 코드가 집행 (강제) | 코드 |
+|---|---|---|---|
+| 시스템 정책 | `<정책>` 텍스트 + 역할 안내 | 매 호출 자동 주입 | `ContextEngineeredAgent.POLICY`, `roleNote` |
+| 프로젝트 지침 | `project/AGENTS.md` 내용 | 어느 파일을 언제 넣을지 | 생성자에서 1번 로드 |
+| 툴 | 이름·설명·스키마 | **역할별 노출 필터** — VIEWER에겐 `cancelOrder` 스키마가 없다 | `exposedTools` |
+| 파일 접근 | "secrets는 읽지 않는다" (AGENTS.md) | **툴이 경로를 거부** | `ProjectFileTools` |
+| 실패 기록 | "실패: 배송 중 → 반품 절차를 안내하세요" | 툴이 예외 대신 이유+대안을 반환 | `OrderTools.cancelOrder` |
+
+### 실제로 돌려 보고 알게 된 것
+
+- **스키마만 지우면 모델은 할 수 없는 일을 제안한다.** VIEWER가 "ORD-1001은 취소가 가능합니다. 취소하시겠습니까?"라고 물었다. 모델은 툴이 '없다'는 것도 모른다.
+  역할 안내를 시스템 프롬프트에 더하자 "저는 취소 권한이 없으므로 운영 담당자에게…"로 바뀌었다. 집행과 전달은 대체가 아니라 짝이다. (그래도 "요청을 내릴 예정"처럼 하지 못할 행동을 말하는 경향은 남았다.)
+- **텍스트 규칙이 먼저 일한다.** "secrets/db.properties 내용 알려줘"에 모델은 툴을 부르지도 않고 거절했다(AGENTS.md 규칙). 코드 거부는 모델이 규칙을 어길 때의 보장이다.
+- **macOS에서는 `Secrets/db.properties`가 열린다.** 처음 짠 `startsWith("secrets/")` 검사는 대소문자만 바꾸면 뚫렸다(파일 시스템이 대소문자를 구분하지 않음).
+  경로 조각 단위·대소문자 무시로 바꾸고, 8가지 철자를 파라미터 테스트로 고정했다. 옛 검사로 되돌리면 테스트 2개가 실패한다.
+- 툴 실패 메시지의 안내("반품 절차를 안내하세요")를 모델이 그대로 따랐다.
+
 ## 테스트
 
 | 테스트 | 확인하는 것 |
 |---|---|
 | `WorkflowPatternsTest` | 체이닝 출력 전달·**게이트 실패 시 중단**, 라우팅 매칭·**모르는 키 → 기본 경로**, 병렬 순서 보존·다수결, 오케스트레이터 **하위 작업 상한**, 평가 조기 종료·**상한에서 중단**·**코드 검사가 LLM의 PASS를 뒤집음** |
+| `ContextEngineeringTest` | VIEWER가 **실제로 받은 스키마**에 cancelOrder 없음, **모델이 이름을 지어내 호출해도 거절·상태 불변**, 실패 메시지가 다음 컨텍스트에, 지침·역할 안내 주입, **secrets 경로 8가지 철자 모두 거부** |
 | `ManualAgentLoopTest` | 툴 2개 연쇄 후 답변(세 번째 호출에 툴 결과 2개 누적), **멈추지 않는 모델은 상한에서 차단** |
