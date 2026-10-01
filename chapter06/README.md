@@ -15,6 +15,9 @@ java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.ai.cli.step=<st
 | `ch6-workflows` | `Ch6Step1_Workflows` | 6.1.2 | 워크플로 5종 차례로 실행 (`--ch6.pattern=chain\|routing\|parallel\|orchestrator\|evaluator`) |
 | `ch6-loop` | `Ch6Step2_ManualAgentLoop` | 6.1.3~6.1.4 | 수동 에이전트 루프 — 계획·행동·관찰을 단계별로 출력 |
 | `ch6-context` | `Ch6Step3_ContextEngineering` | 6.2 | 전달 영역 vs 집행 영역 (`--ch6.role=viewer\|operator`) |
+| `ch6-advisor-loop` | `Ch6Step4_RecursiveAdvisors` | 6.3.2~6.3.4 | 루프 안/밖 어드바이저 호출 수, 안전 가드, 메트릭 |
+| `ch6-augment` | `Ch6Step5_AugmentedToolArguments` | 6.3.4 | 파라미터 증강 — 툴 호출의 '왜'를 로그로 |
+| `ch6-validate` | `Ch6Step6_StructuredOutputValidation` | 6.3.5 | 구조화 출력 교정 루프 (대화형 아님) |
 
 ## 6.1 워크플로와 자율 에이전트
 
@@ -58,10 +61,49 @@ java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.ai.cli.step=<st
   경로 조각 단위·대소문자 무시로 바꾸고, 8가지 철자를 파라미터 테스트로 고정했다. 옛 검사로 되돌리면 테스트 2개가 실패한다.
 - 툴 실패 메시지의 안내("반품 절차를 안내하세요")를 모델이 그대로 따랐다.
 
+## 6.3 재귀 어드바이저
+
+```
++200  MessageChatMemoryAdvisor      루프 밖 → 요청당 1번 (최종 질문·답만 저장)
++250  ProbeAdvisor "outer"          루프 밖 → 요청당 1번
++300  SafeGuardToolCallingAdvisor   ← 루프. chain.copy(this)로 '자기 뒤쪽'만 반복 호출
++400  ToolLoopMetricsAdvisor        루프 안 → 매 반복
++500  ProbeAdvisor "inner"          루프 안 → 매 반복
+      ChatModel
+```
+
+| 클래스 | 책 | 내용 |
+|---|---|---|
+| `advisor/ProbeAdvisor` | 6.3.2 | 호출 수만 세는 탐침 — 안/밖을 숫자로 확인 |
+| `advisor/ToolLoopMetricsAdvisor` | 예제 6.13 | 반복 수·툴별 호출 수·반복당 토큰 (Micrometer) |
+| `advisor/SafeGuardToolCallingAdvisor` | 표 6.8 | ToolCallingAdvisor 훅 5개: 상태 초기화 / 반복 상한 / 토큰 예산 / 긴 툴 결과 자르기 / 최종 로그 |
+| `advisor/AgentThinking` | 예제 6.14 | `AugmentedToolCallbackProvider`로 툴 스키마에 추론·신뢰도를 덧붙임 |
+| `Ch6Step6_…` | 예제 6.15~6.16 | `validateSchema()`, `StructuredOutputValidationAdvisor.maxRepeatAttempts(5)` |
+
+**안전 가드의 상태는 필드가 아니라 요청 컨텍스트에 둔다.** 어드바이저 하나를 모든 요청이 공유하므로 필드 카운터는 요청끼리 섞인다.
+ToolCallingAdvisor는 반복마다 컨텍스트 맵을 얕게 복사하므로 `doInitializeLoop`에서 넣은 상태 객체가 끝까지 전달된다.
+(필드로 바꾸는 변이를 넣으면 `safeGuard_stateIsPerRequest_notShared`가 실패한다.)
+
+### 실제로 돌려 보고 알게 된 것
+
+- 숫자로 본 루프: 툴 2번 쓰는 질문 → outer 1회, inner 2회(병렬 툴 호출이라 반복 2회), 메모리에는 2개(질문·답)만.
+- **툴 결과를 자르면 모델이 틀린 답을 단정한다.** 감사 로그 200줄을 600자로 자르자 "출고 8번"(실제 66번). 잘린 결과 끝에
+  "전체 개수는 추정하지 말 것"을 붙여도 "7번"이라고 했다. **집계 툴(`countAuditEvents`)을 주자 2번 다 66번.**
+  정답이 정해진 계산은 원문을 읽히지 말고 툴로 준다.
+- **자르기는 '마지막 메시지'만 하면 안 된다.** 부모가 자르지 않은 전체 이력을 따로 들고 있다가 매 반복 다시 만들어 주므로 앞 반복의 긴 결과가 되살아난다.
+  목록 전체를 자르도록 했고, 마지막만 자르는 변이를 넣으면 `safeGuard_trimsLongToolResults_includingEarlierRounds`가 실패한다.
+- 파라미터 증강: "SKU-200 재고 있어?" → `[추론 로그] 툴=getStock | 추론=사용자가 SKU-200의 재고 수량을 확인해달라고… | 신뢰도=high`.
+- **책 예제 6.15(`validateSchema()`만)는 qwen3.5:4b에서 실패했다.** 모델이 일정 대신 **JSON 스키마 자체**(`$schema`, `properties`…)를
+  4번 연속 돌려줬고, 검증 오류를 붙여 다시 물어도 같았다 → 재시도 소진 → 파싱 예외. 소스(2.0.1)대로, 재시도를 다 쓰면 어드바이저는
+  마지막 응답을 그냥 돌려주므로 실패 처리는 호출자 몫이다.
+  `useProviderStructuredOutput().validateSchema()`(Ollama가 생성 단계에서 형식 강제 + 검증은 안전망)로 바꾸자 한 번에 통과했다.
+- **스키마 검증은 '모양'만 보장한다.** days=3인데 활동이 5개, 없는 장소 이름, 중국어 글자(享用)가 섞였다. 내용 검증은 7장(평가)의 몫.
+
 ## 테스트
 
 | 테스트 | 확인하는 것 |
 |---|---|
 | `WorkflowPatternsTest` | 체이닝 출력 전달·**게이트 실패 시 중단**, 라우팅 매칭·**모르는 키 → 기본 경로**, 병렬 순서 보존·다수결, 오케스트레이터 **하위 작업 상한**, 평가 조기 종료·**상한에서 중단**·**코드 검사가 LLM의 PASS를 뒤집음** |
 | `ContextEngineeringTest` | VIEWER가 **실제로 받은 스키마**에 cancelOrder 없음, **모델이 이름을 지어내 호출해도 거절·상태 불변**, 실패 메시지가 다음 컨텍스트에, 지침·역할 안내 주입, **secrets 경로 8가지 철자 모두 거부** |
+| `RecursiveAdvisorTest` | 루프 밖 1회·안 3회, 메모리 밖(+200)은 질문·답만 / 안(+400)은 툴 기록까지(자동 등록 어드바이저가 내부 기록을 끔), **반복 상한·토큰 예산 차단**, **상태가 요청마다 새로**, **앞 반복 결과까지 자르기**, 메트릭, 증강 인자가 소비자에게만 가고 원래 툴은 원래 인자로, 검증 실패 → 오류 피드백 재시도, **재시도 소진 시 호출자에게 예외** |
 | `ManualAgentLoopTest` | 툴 2개 연쇄 후 답변(세 번째 호출에 툴 결과 2개 누적), **멈추지 않는 모델은 상한에서 차단** |
