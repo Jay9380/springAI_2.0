@@ -1,0 +1,22 @@
+# 6장 실습 설정
+#   java -jar chapter06/target/chapter06-*.jar --spring.ai.cli.step=ch6-workflows
+spring:
+  application:
+    name: chapter06
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    cli:
+      step: ch6-workflows
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3.5:4b
+        think: false
+        temperature: 0.1
+
+logging:
+  level:
+    root: warn
+    kr.jay.springai: info
