@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>kr.jay.springai</groupId>
+        <artifactId>spring-ai-2-study</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>chapter05</artifactId>
+    <name>chapter05</name>
+    <description>5장 - 스프링 AI MCP : 3장 RAG를 MCP 서버로 떼어 내고 MCP 클라이언트 CLI에서 원격 도구로 쓰기</description>
+
+    <!--
+      책 예제 5.68처럼 서버와 클라이언트를 한 프로젝트에 두고 '프로파일'로 나눠 실행한다.
+        서버      : spring.profiles.active=server  (웹 서버 8085, MCP 엔드포인트 /mcp)
+        클라이언트: 기본 프로파일                     (웹 서버 없음, CLI)
+      실무에서는 보통 서버와 클라이언트가 서로 다른 애플리케이션이다.
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+        <!-- MCP 클라이언트: 서버에 연결하고 원격 도구를 ToolCallback으로 바꿔 준다 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
+        <!-- MCP 서버: Spring MVC 위에서 Streamable HTTP로 도구·리소스·프롬프트를 공개한다 (@McpTool 등 애너테이션 포함) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+        </dependency>
+        <!-- 서버 쪽 RAG용 SimpleVectorStore -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-vector-store</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

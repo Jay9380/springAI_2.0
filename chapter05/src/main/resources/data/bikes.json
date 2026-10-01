@@ -1,0 +1,28 @@
+{
+  "store": {
+    "name": "실습용 가상 자전거 매장",
+    "bikes": [
+      {
+        "brand": "Trek",
+        "model": "Mountain X1",
+        "price": 1200000,
+        "active": true,
+        "description": "험한 산길을 위한 산악자전거. 앞뒤 서스펜션과 29인치 휠로 자갈길에서도 안정적이며, 알루미늄 프레임이라 입문자도 다루기 쉽다."
+      },
+      {
+        "brand": "Giant",
+        "model": "City Lite",
+        "price": 450000,
+        "active": true,
+        "description": "출퇴근용 도시형 자전거. 가벼운 차체와 흙받이, 짐받이가 기본으로 달려 있어 매일 짧은 거리를 다니는 사람에게 알맞다."
+      },
+      {
+        "brand": "Specialized",
+        "model": "Road Pro 7",
+        "price": 3800000,
+        "active": false,
+        "description": "장거리 로드 자전거. 카본 프레임과 22단 변속기로 속도를 내기 좋다. 단종된 모델이라 재고만 판매한다."
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+# 5장 — 서버 모드 (--spring.profiles.active=server)
+spring:
+  application:
+    name: chapter05-server
+  main:
+    web-application-type: servlet
+  ai:
+    model:
+      embedding: ollama                 # 서버만 임베딩 모델(bge-m3)을 쓴다
+    ollama:
+      embedding:
+        model: bge-m3
+    mcp:
+      client:
+        enabled: false                  # 서버 모드에서는 클라이언트 기능을 끈다
+      server:
+        enabled: true
+        annotation-scanner:
+          enabled: true                 # 주의: application.yml(공통)에서 끈 값을 서버 프로파일에서 다시 켠다.
+                                        # 이걸 빼먹으면 @McpTool이 하나도 등록되지 않는다 (실측: "Unknown tool")
+        name: chapter5-rag-mcp-server
+        version: 1.0.0
+        type: SYNC
+        protocol: STREAMABLE            # 원격 서버용 전송: 요청은 HTTP POST, 응답은 JSON 또는 SSE 스트림
+        instructions: >
+          사내 정책·RAG 운영·장애 대응 문서, 자전거 카탈로그, 스프링 부트 가이드를 검색하는 RAG 서버입니다.
+          검색만 필요하면 rag_search_documents, 서버가 답변까지 만들어야 하면 rag_answer_question을 사용하세요.
+        streamable-http:
+          mcp-endpoint: /mcp
+
+server:
+  port: 8085

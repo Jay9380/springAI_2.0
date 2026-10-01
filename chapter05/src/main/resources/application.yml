@@ -1,0 +1,40 @@
+# 5장 — 클라이언트 모드(기본). 서버는 application-server.yml
+#   서버:       java -jar chapter05/target/chapter05-*.jar --spring.profiles.active=server
+#   클라이언트: java -jar chapter05/target/chapter05-*.jar --spring.ai.cli.step=ch5-client-step1
+spring:
+  application:
+    name: chapter05-client
+  main:
+    web-application-type: none          # CLI. 웹 서버를 띄우지 않는다
+    banner-mode: off
+  ai:
+    cli:
+      step: ch5-client-step1
+    model:
+      embedding: none                   # 문서 인덱싱·벡터 검색은 '서버의 책임' → 클라이언트는 임베딩 모델이 필요 없다
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3.5:4b
+        think: false
+        temperature: 0.1
+    mcp:
+      server:
+        enabled: false                  # 클라이언트 모드에서는 서버 기능을 끈다
+        annotation-scanner:
+          enabled: false                # 한 프로젝트에 서버 스타터가 같이 있어서 생기는 스캔 경고를 끈다
+      client:
+        name: chapter5-mcp-client
+        type: SYNC
+        initialized: true               # 기동할 때 initialize 핸드셰이크까지 끝낸다 (서버가 먼저 떠 있어야 함)
+        request-timeout: 60s            # 서버 측 답변 도구는 LLM을 부르므로 넉넉히
+        streamable-http:
+          connections:
+            rag:                        # 연결 이름
+              url: http://localhost:8085
+              endpoint: /mcp
+
+logging:
+  level:
+    root: warn
+    kr.jay.springai: info
