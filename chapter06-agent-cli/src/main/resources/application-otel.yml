@@ -1,0 +1,18 @@
+# [6.6.7 예제 6.49] OTLP 내보내기 켜기 (--spring.profiles.active=...,otel)
+# 앱은 OTLP 엔드포인트 하나만 안다. 어디에 저장하고 어떻게 보여 줄지는 OpenTelemetry 컬렉터와 관측 스택(Tempo·Prometheus·Grafana)의 몫.
+management:
+  tracing:
+    export:
+      otlp:
+        enabled: true
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+  otlp:
+    metrics:
+      export:
+        enabled: true
+        url: http://localhost:4318/v1/metrics
+        step: 10s                       # 학습용으로 짧게 (기본 1분)

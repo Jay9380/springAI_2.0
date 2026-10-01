@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>kr.jay.springai</groupId>
+        <artifactId>spring-ai-2-study</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>chapter06-agent-cli</artifactId>
+    <name>chapter06-agent-cli</name>
+    <description>6.6 엔터프라이즈 스프링 AI 에이전트 CLI : 4-티어(채널·오케스트레이션·능력·파운데이션) + 관측</description>
+
+    <dependencies>
+        <!-- T4 파운데이션: 추론 모델(qwen3.5:4b)과 임베딩(bge-m3, 툴 의미 색인용) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
+        <!-- T2 동적 툴 발견: 툴이 많을 때 VectorToolIndex(의미 검색)로 필요한 툴만 노출 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-tool-search-advisor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-vector-store</artifactId>
+        </dependency>
+
+        <!-- T3 원격 능력: 운영 MCP 서버(ops 프로파일)와 지식 MCP 서버(5장 RAG 서버) -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+        </dependency>
+
+        <!-- T2·T3 메타 툴: 스킬, 계획, 질문, 하위 에이전트 (6.5와 같은 0.10.0) -->
+        <dependency>
+            <groupId>org.springaicommunity</groupId>
+            <artifactId>spring-ai-agent-utils</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+
+        <!-- 횡단 관심사: 관측. 액추에이터가 MeterRegistry·ObservationRegistry를 만들면 스프링 AI의 gen_ai.* 계측이 자동으로 쌓인다 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+          [6.6.7 예제 6.49] 표준 관측: 트레이스·메트릭을 OTLP로 내보낸다 (OpenTelemetry GenAI 규약의 gen_ai.* 어휘).
+          책은 micrometer-tracing-bridge-otel, opentelemetry-exporter-otlp, micrometer-registry-otlp를 각각 넣는다.
+          Boot 4는 자동 구성이 모듈로 쪼개져 있어서 그 셋만으로는 자동 구성 모듈이 빠진다 → 셋과 자동 구성을 함께 담은 이 스타터를 쓴다.
+          내보내기는 기본으로 꺼 두고(수집기가 없으면 연결 실패 로그가 계속 난다), otel 프로파일에서 켠다.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-opentelemetry</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

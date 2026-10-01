@@ -1,0 +1,15 @@
+# [Step 2·3] 운영 MCP 서버에 연결 (서버 먼저: --spring.profiles.active=ops)
+spring:
+  ai:
+    mcp:
+      client:
+        enabled: true
+        name: chapter6-agent-cli
+        type: SYNC
+        initialized: true
+        request-timeout: 5m             # 승인(사람)을 기다리는 동안에도 tools/call은 열려 있다
+        streamable-http:
+          connections:
+            operations:                 # @McpElicitation(clients = "operations")의 그 이름
+              url: http://localhost:8086
+              endpoint: /mcp

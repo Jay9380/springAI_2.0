@@ -1,0 +1,23 @@
+# [Step 2·3] 운영 MCP 서버 (--spring.profiles.active=ops) : check_stock, place_purchase_order(승인 게이트)
+spring:
+  application:
+    name: chapter06-ops-server
+  main:
+    web-application-type: servlet
+  ai:
+    cli:
+      step: none
+    mcp:
+      server:
+        enabled: true
+        annotation-scanner:
+          enabled: true
+        name: chapter6-operations-server
+        version: 1.0.0
+        type: SYNC
+        protocol: STREAMABLE
+        streamable-http:
+          mcp-endpoint: /mcp
+
+server:
+  port: 8086

@@ -1,0 +1,20 @@
+# [Step 4] 지식 MCP 서버 = 5장 RAG 서버 (서버 먼저: chapter05 jar --spring.profiles.active=server)
+spring:
+  ai:
+    mcp:
+      client:
+        enabled: true
+        name: chapter6-agent-cli
+        type: SYNC
+        initialized: true
+        request-timeout: 5m
+        streamable-http:
+          connections:
+            knowledge:
+              url: http://localhost:8085
+              endpoint: /mcp
+
+chapter6:
+  knowledge:
+    url: http://localhost:8085
+    api-key: ${MCP_API_KEY:local-study-key}   # 5장 5.4의 API 키. 이 서버로 가는 요청에만 붙인다 (KnowledgeApiKeyCustomizer)

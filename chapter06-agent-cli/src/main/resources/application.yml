@@ -1,0 +1,70 @@
+# 6.6 에이전트 CLI (저장소 루트에서 실행)
+#   Step 1     : java -jar chapter06-agent-cli/target/*.jar --spring.ai.cli.step=ch6-core
+#   Step 2·3   : (운영 서버 먼저) ... --spring.profiles.active=with-ops --spring.ai.cli.step=ch6-core
+#   Step 4     : (5장 RAG 서버 먼저) ... --spring.profiles.active=with-ops,with-knowledge --spring.ai.cli.step=ch6-core
+#   Step 5·6·Final : ... --spring.profiles.active=with-ops,with-knowledge   (기본 step = ch6-final)
+#   운영 서버  : ... --spring.profiles.active=ops
+spring:
+  application:
+    name: chapter06-agent-cli
+  main:
+    web-application-type: none          # CLI 채널 (ops 프로파일에서 servlet으로 덮어씀)
+    banner-mode: off
+  ai:
+    cli:
+      step: ch6-final                   # 옵션 없이 실행하면 최종 통합 CLI
+      home: chapter06-agent-cli/src/main/resources    # agents/·skills/는 파일 시스템 경로로 읽는다 (책 p.635 경로 주의)
+      agent:
+        core:
+          system-prompt: |              # 페르소나를 코드 밖 설정으로 (예제 6.30)
+            당신은 사용자의 요청을 끝까지 처리하는 AI 에이전트입니다.
+            - 작업에 필요한 툴이 있으면 직접 호출하고, 결과를 확인한 뒤 다음 행동을 결정합니다.
+            - 숫자 계산은 직접 하지 말고 계산 툴을 씁니다.
+            - 툴로 확인하지 않은 사실은 단정하지 않습니다.
+            - 툴이 '취소', '거부', '실패'를 돌려주면 다시 시도하지 말고 사용자에게 그대로 알립니다.
+            - 모든 작업이 끝나면 수행한 내용을 한국어로 간결하게 요약합니다.
+      tool-search:
+        min-tools: 10                   # 툴이 이 수 이상이면 동적 툴 발견(VectorToolIndex)을 켠다
+      safety:
+        max-tool-rounds: 10             # 한 요청에서 허용하는 툴 실행 라운드 상한 (AgentSafety)
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3.5:4b
+        think: false                    # 책은 think: low. 4B 로컬 실행 속도를 위해 끈다
+        temperature: 0.1
+      embedding:
+        model: bge-m3                   # VectorToolIndex가 툴 설명을 의미 색인할 때 사용
+    mcp:
+      client:
+        enabled: false                  # with-ops / with-knowledge 프로파일에서 켠다
+      server:
+        enabled: false                  # ops 프로파일에서만 켠다
+        annotation-scanner:
+          enabled: false
+
+# [6.6.7] 관측. 스프링 AI가 자동으로 남기는 신호(gen_ai.client.operation, spring.ai.tool, spring.ai.advisor …)는
+# 내보내기를 꺼도 MeterRegistry에 쌓인다 → CLI의 /metrics로 확인. 외부 수집기로 보내려면 otel 프로파일을 켠다.
+management:
+  observations:
+    key-values:
+      application: chapter06-agent-cli  # 모든 관측 신호에 붙는 공통 태그
+  tracing:
+    sampling:
+      probability: 1.0                  # 학습 단계: 전수 추적
+    export:
+      otlp:
+        enabled: false                  # 수집기가 없으면 연결 실패 로그가 계속 나므로 기본은 끔
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
+
+logging:
+  level:
+    root: warn
+    kr.jay.springai: info
