@@ -1,0 +1,16 @@
+# [부록 A 예제 A.2] OpenAI로 전환 (--spring.profiles.active=openai)
+# 키는 소스·설정 파일에 쓰지 말고 환경 변수로. 실습 전에 OpenAI 콘솔에서 월 사용 한도(Usage limits)를 걸어 둘 것.
+spring:
+  ai:
+    model:
+      chat: openai
+      embedding: openai
+    openai:
+      # 실측: ${OPENAI_API_KEY}만 쓰면 환경 변수가 없을 때 자리표시자 글자가 '그대로' 키가 되어 기동은 성공하고,
+      # 첫 호출에서야 "${OPENAI_API_KEY}"를 키로 보내 401을 받는다. 빈 기본값(:)을 줘도 기동은 성공한다(첫 호출에서 401).
+      # 그래서 OpenAiKeyGuard가 기동 시점에 빈 키를 막는다 — 네트워크 호출 전에 실패.
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        model: gpt-4.1-nano               # 2.0은 옵션이 평평해졌다 (1.x의 chat.options.model → chat.model)
+      embedding:
+        model: text-embedding-3-small

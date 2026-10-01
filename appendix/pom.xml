@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>kr.jay.springai</groupId>
+        <artifactId>spring-ai-2-study</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>appendix</artifactId>
+    <name>appendix</name>
+    <description>부록 - OpenAI 전환, AI 평가(관련성·사실성·평가자-최적화 루프), 외부 에이전트 연결, 플레이그라운드</description>
+
+    <dependencies>
+        <!-- 기본은 로컬 Ollama -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
+        <!--
+          [부록 A 예제 A.1] OpenAI 스타터. 두 스타터를 함께 두고 spring.ai.model.* 속성으로 공급자를 고른다.
+          주의(2.0.1 소스): OpenAI 자동 구성은 chat·embedding·image·audio·moderation 모두 matchIfMissing=true라서
+          명시적으로 끄지 않으면 모두 켜지고 API 키를 요구한다 → application.yml에서 나머지를 none으로 끈다.
+        -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+
+        <!-- [부록 B] 평가 대상 RAG: QuestionAnswerAdvisor + SimpleVectorStore -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-vector-store</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-vector-store-advisor</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

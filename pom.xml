@@ -40,6 +40,7 @@
         <module>chapter05</module>
         <module>chapter06</module>
         <module>chapter06-agent-cli</module>
+        <module>appendix</module>
     </modules>
 
     <!--

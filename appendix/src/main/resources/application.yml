@@ -1,0 +1,35 @@
+# 부록 실습 설정 — 기본은 로컬 Ollama
+#   java -jar appendix/target/appendix-*.jar --spring.ai.cli.step=appx-eval
+#   OpenAI로 전환: --spring.profiles.active=openai (OPENAI_API_KEY 필요, 과금됨)
+spring:
+  application:
+    name: appendix
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    cli:
+      step: appx-eval
+    # [부록 A] 공급자 선택. 두 스타터가 함께 있으므로 반드시 고른다 (안 고르면 ChatModel 빈이 둘 → 주입 충돌).
+    # 쓰지 않는 OpenAI 모델 자동 구성(image·audio·moderation)도 끈다. matchIfMissing=true라 그냥 두면 켜지고 API 키를 요구한다.
+    model:
+      chat: ollama
+      embedding: ollama
+      image: none
+      audio:
+        speech: none
+        transcription: none
+      moderation: none
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen3.5:4b
+        think: false
+        temperature: 0.1
+      embedding:
+        model: bge-m3
+
+logging:
+  level:
+    root: warn
+    kr.jay.springai: info

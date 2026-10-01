@@ -43,6 +43,7 @@ curl http://localhost:11434/api/tags
 | [`chapter05`](chapter05) | 5장 스프링 AI MCP | RAG를 MCP 서버(@McpTool·리소스·프롬프트·자동 완성)로 공개, MCP 클라이언트 발견·직접 호출·ToolCallback 변환·_meta 정책, API 키 보안, MCP 챗봇 CLI |
 | [`chapter06`](chapter06) | 6장 AI 에이전트 (6.1~6.5) | 워크플로 패턴 5종·수동 에이전트 루프, 컨텍스트 엔지니어링(전달 vs 집행), 재귀 어드바이저·안전 가드 훅·파라미터 증강·출력 교정, 사람 승인(MCP Elicitation)·동적 툴 탐색, 커뮤니티 스킬·명확화 질문·작업 계획·하위 에이전트 |
 | [`chapter06-agent-cli`](chapter06-agent-cli) | 6장 6.6 엔터프라이즈 에이전트 CLI | 4-티어(채널·오케스트레이션·능력·파운데이션) 패키지, 로컬+운영 MCP+지식 MCP 툴, 메타 툴 레이어, 발주 승인 게이트, gen_ai.* 관측과 OTLP |
+| [`appendix`](appendix) | 부록 | OpenAI 전환(공급자 선택의 함정), AI 평가(Relevancy·FactChecking·커스텀 심판), 평가로 루프 보강, 외부 에이전트 연결·플레이그라운드 안내 |
 
 각 모듈의 `README.md`에 그 장에서 무엇을 배우는지, 어떤 순서로 코드를 읽으면 되는지 적어 두었다.
 
