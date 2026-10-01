@@ -20,6 +20,9 @@ java -jar chapter06/target/chapter06-0.0.1-SNAPSHOT.jar --spring.ai.cli.step=<st
 | `ch6-validate` | `Ch6Step6_StructuredOutputValidation` | 6.3.5 | 구조화 출력 교정 루프 (대화형 아님) |
 | `ch6-agent` | `Ch6Step7_BasicAgent` | 6.4.3~6.4.4 | 코어만으로 만든 에이전트 + MCP 툴 + 사람 승인 (`--spring.profiles.active=agent`, 서버 먼저) |
 | `ch6-tool-search` | `Ch6Step8_ToolSearch` | 6.4.5 | 툴 28개 전부 노출 vs 툴 검색(Lucene/Regex) 토큰 비교 (대화형 아님) |
+| `ch6-skills` | `Ch6Step9_Skills` | 6.5.1 | SKILL.md 스킬 (점진적 공개) — 저장소 루트에서 실행 |
+| `ch6-ask-todo` | `Ch6Step10_AskAndTodo` | 6.5.2~6.5.3 | 명확화 질문 + 작업 계획 |
+| `ch6-task` | `Ch6Step11_Subagents` | 6.5.4 | 하위 에이전트 위임 (TaskTool) — 저장소 루트에서 실행 |
 
 6.4.4 사람 승인은 터미널 2개로 돌린다.
 
@@ -144,6 +147,32 @@ ToolCallingAdvisor는 반복마다 컨텍스트 맵을 얕게 복사하므로 `d
   같은 임계값이 툴 개수에 따라 다르게 동작하므로 운영 툴 수로 조정해야 한다. 두 경우를 테스트로 고정했다.
 - 스타터(`spring-ai-starter-tool-search-advisor`)의 자동 구성은 `enabled=true` 하나로 **모든** ChatClient의 툴 루프를 바꾼다. 이 모듈은 라이브러리만 넣고 직접 만들었다.
 
+## 6.5 커뮤니티 확장 — spring-ai-agent-utils 0.10.0
+
+| 기능 | 책 | 이 모듈에서 | 책과 다르게 한 것 |
+|---|---|---|---|
+| 스킬 | 예제 6.22~6.23 | `skills/restock-policy`(본문 + `reference/safety-stock.md`), `skills/code-reviewer` | **ShellTools 미등록**, FileSystemTools에서 **Read만**, 읽기 허용 디렉터리 제한 |
+| 명확화 질문 | 예제 6.24 | `community/ConsoleQuestionHandler` | 라이브러리 핸들러는 질문마다 Scanner를 새로 만들어 공유 입력과 충돌 → 공유 리더로 다시 작성 |
+| 작업 계획 | 예제 6.25 | `community/LenientTodoWriteCallback` | 이중 중첩 스키마를 4B 모델이 틀려서 **입력 보정 어댑터** |
+| 하위 에이전트 | 예제 6.26~6.27 | `agents/code-reviewer.md`, `agents/report-writer.md`, `community/SubagentToolPolicy` | 시작 시 **tools: 누락·오타 검사** |
+
+### 실제로 돌려 보고 알게 된 것
+
+- **모델이 스킬 이름을 툴 이름으로 불렀다.** `Skill(command="restock-policy")` 대신 `restock-policy`라는 툴을 호출 → "No ToolCallback found" 예외가 **CLI 전체를 죽였다.**
+  시스템 프롬프트에 "스킬 이름은 툴 이름이 아니다, 예: Skill(command=…)"를 넣자 해결. 대화 한 턴의 실패가 세션을 죽이지 않도록 러너에서 예외를 잡았다.
+- **스킬의 상대 경로를 엉뚱하게 해석했다.** `reference/safety-stock.md`를 스킬 폴더가 아닌 `resources/reference/`로 읽으려다 허용 디렉터리 밖이라 거부됨 → "안전재고를 확인할 수 없다".
+  SKILL.md에 "Base directory 뒤에 붙인 절대 경로"라고 적자 3번 다 `Skill → getStock → Read → 50개 발주`로 끝까지 갔다. 스킬 본문도 결국 '모델에게 전달되는 텍스트'라 작은 모델에겐 구체적으로 써야 한다.
+- **스킬이 있어도 내용이 뒤집힐 수 있다.** 코드 리뷰 2회 중 1회는 "스프링은 @Autowired 필드 주입을 권장"이라고 정반대로 조언했다(스킬은 생성자 주입 점검을 지시). 스킬은 절차를 줄 뿐 품질을 보장하지 않는다 → 7장 평가.
+- **명확화 질문:** "다음 유럽 여행지 추천해줘" → 모델이 스스로 질문 3개(기간·지역·스타일, 선택지 포함)를 던지고 답을 반영했다. 추천 내용엔 실재하지 않는 지명이 섞였다.
+- **TodoWrite는 모델이 필요할 때만 쓴다.** "세 SKU 재고 확인" 정도는 병렬 툴 호출 한 번으로 끝내고 계획을 만들지 않았다(툴 설명에 '3단계 미만이면 생략'). 5단계를 명시하자 썼다.
+- **TodoWrite 입력을 모델이 틀렸다 — 그리고 내 첫 수정도 틀렸다.** 스키마가 `{"todos":{"todos":[…]}}`로 이중 중첩이라 매번 실패. 오류 메시지만 보고 `{"todos":[…]}`를 보낸다고 추측해 고쳤는데 그대로 실패했다.
+  실제 인자를 찍어 보니 `{"todos":"[…]"}` — **배열을 문자열로** 보내고 있었다. 실제 모양을 받도록 고치자 계획이 표시됐다(`in_progress → completed`). 고치기 전에 실제 페이로드를 볼 것.
+  (그래도 모델은 단계마다 갱신하지 않고 4개를 한꺼번에 completed로 바꿨고, 마지막 항목은 completed로 바꾸지 않았다.)
+- **하위 에이전트 위임:** 리드의 툴 호출은 `Task(subagent_type=code-reviewer)` **한 번뿐**. 파일 읽기와 분석은 하위 에이전트의 격리된 컨텍스트에서 일어나고 리드는 요약만 받았다.
+- **하위 에이전트 기본 권한은 '전부'다.** 시작 시 검사가 `report-writer: tools 미지정 → 기본 툴 전부([Bash, Edit, Write] 포함)`를 경고했다. 책 예제 6.26의 `tools: ReadFile, Grep, ListDirectory`는
+  실제 이름(`Read`)과 달라 두 개가 조용히 빠진다 — 테스트로 고정.
+- 0.10.0은 2.0.0 기준이라 2.0.1에서 deprecated된 `ToolCallAdvisor`를 쓴다. 2.0.1에 그 클래스가 남아 있어 동작한다(0.11.0부터는 2.0.1 기준).
+
 ## 테스트
 
 | 테스트 | 확인하는 것 |
@@ -154,4 +183,5 @@ ToolCallingAdvisor는 반복마다 컨텍스트 맵을 얕게 복사하므로 `d
 | `OpsServerElicitationTest` | 운영 MCP 서버를 실제로 띄우고 순수 MCP 클라이언트로: 조회는 묻지 않음, 승인 시 실행·폼 스키마 전달, **거절·취소·confirm 미체크·승인 창구 없음은 실행 안 됨** |
 | `ConsoleElicitationHandlerTest` | y → ACCEPT+폼, **그 외 입력은 DECLINE**, **입력 없음은 CANCEL(승인으로 취급 안 함)** |
 | `AgentAndToolSearchTest` | 기본 에이전트 메모리에 툴 결과가 한 번씩만, 툴 검색 첫 호출은 toolSearchTool 하나만·찾은 툴만 추가, **대화 ID 없으면 실패**, **Lucene 언어 불일치·소수 툴 임계값 함정** |
+| `CommunityToolsTest` | 스킬 설명엔 이름만·본문은 툴 결과로, **FileSystemTools는 Write·Edit까지 등록됨**, **Read는 허용 디렉터리 밖·`..` 거부**, 질문 핸들러 번호→라벨·직접 입력·**입력 끊김은 빈 값**, **in_progress 2개는 코드가 거부**, **실측 TodoWrite 모양 보정(보정 없으면 실패)**, **tools 누락·책 예제 이름 불일치 검출** |
 | `ManualAgentLoopTest` | 툴 2개 연쇄 후 답변(세 번째 호출에 툴 결과 2개 누적), **멈추지 않는 모델은 상한에서 차단** |

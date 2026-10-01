@@ -57,6 +57,18 @@
             <version>9.12.3</version>
         </dependency>
 
+        <!--
+          [6.5 예제 6.21] 커뮤니티 에이전트 유틸: 스킬(SkillsTool), 명확화 질문(AskUserQuestionTool),
+          작업 계획(TodoWriteTool), 하위 에이전트(TaskTool). 인큐베이팅 단계라 API가 바뀔 수 있다.
+          책 기준 0.10.0을 쓴다. 0.10.0은 spring-ai 2.0.0으로 빌드되어 2.0.1에서 deprecated된 ToolCallAdvisor를 쓰지만,
+          2.0.1에도 그 클래스가 (forRemoval) 남아 있어 동작한다. 0.11.0부터는 2.0.1 기준이다.
+        -->
+        <dependency>
+            <groupId>org.springaicommunity</groupId>
+            <artifactId>spring-ai-agent-utils</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+
         <!-- [6.3.3 예제 6.13] 툴 루프 메트릭(카운터·분포). 버전은 스프링 부트가 관리한다 -->
         <dependency>
             <groupId>io.micrometer</groupId>
